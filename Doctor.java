@@ -15,7 +15,7 @@ public class Doctor extends Thread {
         this.treatmentRooms = treatmentRooms;
     }
 
-    @Override
+    @Override   
     public void run() {
         // TODO: take a patient; try to acquire a room for 3 seconds;
         // treat and release the room, or return the patient to the waiting room.
