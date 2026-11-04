@@ -23,12 +23,10 @@ public class WaitingRoom {
     }
 
     public boolean tryEnter(Patient patient) throws InterruptedException {
-        if (!emptySlots.tryAcquire()) {
+        if (!emptySlots.tryAcquire(0, java.util.concurrent.TimeUnit.MILLISECONDS)) {
             return false;
         }
-
         mutex.acquire();
-
         try{
             patients.add(patient);
         } finally {
