@@ -3,32 +3,66 @@ package hospital;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
-// The bounded buffer shared by Patient threads and Doctor threads.
 public class WaitingRoom {
-    private final Queue<Patient> patients = new ArrayDeque<>();
+    private final Queue<Patient> patients;
     private final int capacity;
 
-    // Semaphores used for the bounded-buffer synchronization.
-    private final Semaphore mutex = new Semaphore(1);
     private final Semaphore emptySlots;
-    private final Semaphore availablePatients = new Semaphore(0);
+    private final Semaphore availablePatients;
+    private final Semaphore mutex;
 
     public WaitingRoom(int capacity) {
+        if (capacity <= 0) {
+            throw new IllegalArgumentException("Capacity must be greater than zero.");
+        }
         this.capacity = capacity;
+        this.patients = new ArrayDeque<>();
         this.emptySlots = new Semaphore(capacity);
+        this.availablePatients = new Semaphore(0);
+        this.mutex = new Semaphore(1);
     }
 
-    public void put(Patient patient) throws InterruptedException {
-        // TODO: wait for an empty slot, lock the queue, add patient, unlock, signal availablePatients.
-        throw new UnsupportedOperationException("TODO");
+    public boolean tryEnter(Patient patient) throws InterruptedException {
+        if (!emptySlots.tryAcquire()) {
+            return false;
+        }
+
+        mutex.acquire();
+
+        try{
+            patients.add(patient);
+        } finally {
+            mutex.release();
+        }
+        availablePatients.release();
+        return true;
     }
 
-    public Patient take() throws InterruptedException {
-        // TODO: wait for an available patient, lock the queue, remove patient, unlock, signal emptySlots.
-        throw new UnsupportedOperationException("TODO");
+    public void enter(Patient patient) throws InterruptedException {
+        emptySlots.acquire();
+        mutex.acquire();
+        try {
+            patients.add(patient);
+        } finally {
+            mutex.release();
+        }
+        availablePatients.release();
     }
 
-    public int getCapacity() {
+    public Patient takePatient() throws InterruptedException {
+        availablePatients.acquire();
+        mutex.acquire();
+        Patient patient = null;
+        try{
+            patient = patients.poll();
+        }finally{
+            mutex.release();
+        }
+        emptySlots.release();
+        return patient;
+    }
+
+    public int getCapacity(){
         return capacity;
     }
-}
+} 
