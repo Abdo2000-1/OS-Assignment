@@ -1,5 +1,7 @@
 package hospital;
+
 import java.util.concurrent.TimeUnit;
+
 public class WaitingRoomTest {
 
     public static void main(String[] args) {
@@ -72,7 +74,8 @@ public class WaitingRoomTest {
             try {
                 Patient p1 = new Patient(101, waitingRoom);
                 Logger.log("Patient " + p1.getPatientId() + " trying to enter waiting room...");
-                waitingRoom.put(p1);
+                waitingRoom.enter(p1); 
+                
                 Logger.log("[PASS] Patient " + p1.getPatientId() + " entered waiting room.");
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -82,7 +85,9 @@ public class WaitingRoomTest {
         Thread doctorThread = new Thread(() -> {
             try {
                 Thread.sleep(200);
-                Patient p = waitingRoom.take();
+                
+                Patient p = waitingRoom.takePatient(); 
+                
                 Logger.log("[PASS] Doctor took Patient " + p.getPatientId() + " from waiting room.");
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
