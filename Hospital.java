@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-// Creates and connects the shared resources, patients, and doctors.
 public class Hospital {
     private final int doctorCount;
     private final int patientCount;
@@ -20,9 +19,63 @@ public class Hospital {
         this.treatmentRooms = new TreatmentRooms();
     }
 
-    public void start() throws InterruptedException {
-        // TODO: create and start doctor and patient threads; wait for patients;
-        // stop and join doctors; print the final simulation message.
+    public void start() throws InterruptedException 
+    {
+
+        for (int i = 1; i <= doctorCount; i++) 
+        {
+            Doctor doctor = new Doctor(i, waitingRoom, treatmentRooms);
+
+            doctors.add(doctor);
+        }
+
+
+        for (int i = 1; i <= patientCount; i++) {
+            Patient patient = new Patient(i, waitingRoom);
+
+            patients.add(patient);
+        }
+
+
+        StringBuilder message = new StringBuilder("Patients arriving:\n");
+
+        for (Patient patient : patients) {
+            message.append(patient).append(" ");
+        }
+
+        Logger.log(message.toString());
+
+
+        for (Doctor doctor : doctors) 
+        {
+            doctor.start();
+        }
+
+        for (Patient patient : patients) 
+        {
+            patient.start();
+        }
+
+
+        for (Patient patient : patients)
+        {
+            patient.join();
+        }
+
+   
+        for (Doctor doctor : doctors) 
+        {
+            doctor.requestStop();
+        }
+
+        for (Doctor doctor : doctors) 
+        {
+            doctor.join();
+        }
+
+    
+        Logger.log("All patients have been treated.");
+        Logger.log("Simulation completed.");
     }
 
     public static void main(String[] args) {
