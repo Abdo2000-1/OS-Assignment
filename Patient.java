@@ -1,12 +1,11 @@
 package hospital;
-
-import java.util.concurrent.CountDownLatch;
-
-// A patient arrives, enters (or waits for) the waiting room, and leaves after treatment.
 public class Patient extends Thread {
+
+    private enum Outcome { NONE, TREATED, SENT_BACK }
     private final int patientId;
     private final WaitingRoom waitingRoom;
-    private final CountDownLatch treatmentFinished = new CountDownLatch(1);
+    private final Semaphore outcomeSignal = new Semaphore(0);
+    private volatile Outcome outcome = Outcome.NONE;
 
     public Patient(int patientId, WaitingRoom waitingRoom) {
         this.patientId = patientId;
@@ -15,23 +14,52 @@ public class Patient extends Thread {
 
     @Override
     public void run() {
-        // TODO: print arrival, call waitingRoom.put(this), wait for treatment, then print leaving.
+        try {
+            Logger.log(this + " arrived.");
+
+            boolean treated = false;
+            while (!treated) {
+                enterWaitingRoom();
+
+                outcomeSignal.acquire();
+                if (outcome == Outcome.TREATED) {
+                    treated = true;
+                } else {
+                    outcome = Outcome.NONE;
+                }
+            }
+
+            Logger.log(this + " left.");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    // Non-blocking attempt first; if full, announce it and block until a seat frees up.
+    private void enterWaitingRoom() throws InterruptedException {
+        if (waitingRoom.tryEnter(this)) {
+            Logger.log(this + " entered the waiting room.");
+        } else {
+            Logger.log("The waiting room is full.");
+            Logger.log(this + " is waiting outside for an available seat.");
+            waitingRoom.enter(this);           // blocking
+            Logger.log(this + " entered the waiting room.");
+        }
     }
 
     public void finishTreatment() {
-        treatmentFinished.countDown();
+        outcome = Outcome.TREATED;
+        outcomeSignal.release();
     }
 
-    public void waitForTreatment() throws InterruptedException {
-        treatmentFinished.await();
+
+    public void sentBack() {
+        outcome = Outcome.SENT_BACK;
+        outcomeSignal.release();
     }
 
-    public int getPatientId() {
-        return patientId;
-    }
+    public int getPatientId() { return patientId; }
 
     @Override
-    public String toString() {
-        return "P" + patientId;
-    }
+    public String toString() { return "P" + patientId; }
 }
