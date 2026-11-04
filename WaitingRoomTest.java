@@ -85,8 +85,8 @@ public class WaitingRoomTest {
         Thread doctorThread = new Thread(() -> {
             try {
                 Thread.sleep(200);
-                
-                Patient p = waitingRoom.takePatient(); 
+
+                Patient p = waitingRoom.takeNext();
                 
                 Logger.log("[PASS] Doctor took Patient " + p.getPatientId() + " from waiting room.");
             } catch (InterruptedException e) {
