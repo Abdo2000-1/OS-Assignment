@@ -49,7 +49,7 @@ public class WaitingRoom {
         availablePatients.release();
     }
 
-    public Patient takePatient() throws InterruptedException {
+    public Patient takeNext() throws InterruptedException {
         availablePatients.acquire();
         mutex.acquire();
         Patient patient = null;
