@@ -20,7 +20,7 @@ public class Doctor extends Thread {
         Random random = new Random();
         while (running) {
             try {
-                Patient patient = waitingRoom.take();
+                Patient patient = waitingRoom.takeNext();
                 
                 Logger.log("Doctor " + doctorId + " is assigned to " + patient + ".");
                 Logger.log("Doctor " + doctorId + " is trying to acquire a treatment room.");
