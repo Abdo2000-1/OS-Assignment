@@ -1,8 +1,6 @@
 package hospital;
-
 import java.util.concurrent.TimeUnit;
 
-// Custom semaphore required by the assignment.
 public class Semaphore {
     private int permits;
 
@@ -11,17 +9,31 @@ public class Semaphore {
     }
 
     public synchronized void acquire() throws InterruptedException {
-        // TODO: wait until a permit is available, then acquire it.
-        throw new UnsupportedOperationException("TODO");
+        while (permits <= 0) {
+            wait();
+        }
+        permits--;
     }
 
     public synchronized boolean tryAcquire(long timeout, TimeUnit unit) throws InterruptedException {
-        // TODO: acquire within the given timeout; return false if time runs out.
-        throw new UnsupportedOperationException("TODO");
+        long millis = unit.toMillis(timeout);
+        long startTime = System.currentTimeMillis();
+        long elapsedTime = 0;
+
+        while (permits <= 0) {long remaining = millis - elapsedTime;
+            if (remaining <= 0) {
+                return false; 
+            }
+            wait(remaining);
+            elapsedTime = System.currentTimeMillis() - startTime;
+        }
+        permits--;
+        return true;
     }
 
     public synchronized void release() {
-        // TODO: return a permit and wake a waiting thread.
-        throw new UnsupportedOperationException("TODO");
+        permits++;
+        notifyAll();
     }
+
 }
