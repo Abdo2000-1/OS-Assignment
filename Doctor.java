@@ -1,8 +1,8 @@
 package hospital;
 
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-// A doctor consumes patients from the waiting room and treats them when a room is available.
 public class Doctor extends Thread {
     private final int doctorId;
     private final WaitingRoom waitingRoom;
@@ -17,9 +17,42 @@ public class Doctor extends Thread {
 
     @Override   
     public void run() {
-        // TODO: take a patient; try to acquire a room for 3 seconds;
-        // treat and release the room, or return the patient to the waiting room.
-        // Use a random treatment duration as required by the assignment.
+        Random random = new Random();
+        while (running) {
+            try {
+                Patient patient = waitingRoom.take();
+                
+                Logger.log("Doctor " + doctorId + " is assigned to " + patient + ".");
+                Logger.log("Doctor " + doctorId + " is trying to acquire a treatment room.");
+
+                boolean acquired = treatmentRooms.tryAcquireRoom(3, TimeUnit.SECONDS);
+
+                if (acquired) {
+                    Logger.log("Doctor " + doctorId + " acquired a treatment room.");
+                    Logger.log("Doctor " + doctorId + " begins treating " + patient + ".");
+
+                    int treatmentTime = 1000 + random.nextInt(4000);
+                    Thread.sleep(treatmentTime);
+
+                    Logger.log("Doctor " + doctorId + " finished treating " + patient + ".");
+                    treatmentRooms.releaseRoom();
+                    Logger.log("Doctor " + doctorId + " released the treatment room.");
+                    
+                    patient.finishTreatment();
+                } else {
+                    Logger.log("Doctor " + doctorId + " could not acquire a treatment room.");
+                    Logger.log("Doctor " + doctorId + " is sending " + patient + " back to the waiting room.");
+                    
+                    patient.sentBack();
+                }
+
+                Logger.log("Doctor " + doctorId + " is now available.");
+
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
     }
 
     public void requestStop() {
